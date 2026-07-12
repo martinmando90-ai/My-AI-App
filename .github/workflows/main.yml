@@ -6,30 +6,19 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+    container:
+      image: mingc/android-build-box:latest
+      
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Setup Android SDK
-      uses: android-actions/setup-android@v3
-      
-    - name: Setup JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-        
-    - name: Create Complete Android Project
+    - name: Create Android Project
       run: |
-        # إنشاء المجلدات
         mkdir -p app/src/main/java/com/example/myaiapp
         mkdir -p app/src/main/res/layout
         mkdir -p app/src/main/res/values
-        mkdir -p app/src/main/res/drawable
-        mkdir -p gradle/wrapper
         
-        # 1. AndroidManifest.xml
         cat > app/src/main/AndroidManifest.xml << 'EOF'
         <?xml version="1.0" encoding="utf-8"?>
         <manifest xmlns:android="http://schemas.android.com/apk/res/android"
@@ -48,13 +37,10 @@ jobs:
         </manifest>
         EOF
         
-        # 2. MainActivity.kt
         cat > app/src/main/java/com/example/myaiapp/MainActivity.kt << 'EOF'
         package com.example.myaiapp
-        
         import android.os.Bundle
         import androidx.appcompat.app.AppCompatActivity
-        
         class MainActivity : AppCompatActivity() {
             override fun onCreate(savedInstanceState: Bundle?) {
                 super.onCreate(savedInstanceState)
@@ -63,7 +49,7 @@ jobs:
         }
         EOF
         
-        # 3. activity_main.xml
+        mkdir -p app/src/main/res/layout
         cat > app/src/main/res/layout/activity_main.xml << 'EOF'
         <?xml version="1.0" encoding="utf-8"?>
         <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -72,7 +58,6 @@ jobs:
             android:orientation="vertical"
             android:gravity="center"
             android:background="#0a0a1a">
-            
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -80,172 +65,26 @@ jobs:
                 android:textColor="#4a90d9"
                 android:textSize="28sp"
                 android:textStyle="bold" />
-                
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Welcome to your AI!"
+                android:text="Welcome!"
                 android:textColor="#c0c0c0"
-                android:layout_marginTop="16dp"
-                android:textSize="16sp" />
-                
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Built with ❤️"
-                android:textColor="#00ff88"
-                android:layout_marginTop="32dp"
-                android:textSize="12sp" />
+                android:layout_marginTop="16dp" />
         </LinearLayout>
         EOF
         
-        # 4. strings.xml
         cat > app/src/main/res/values/strings.xml << 'EOF'
         <resources>
             <string name="app_name">My AI App</string>
         </resources>
         EOF
         
-        # 5. colors.xml
-        cat > app/src/main/res/values/colors.xml << 'EOF'
-        <resources>
-            <color name="purple_200">#FFBB86FC</color>
-            <color name="purple_500">#FF6200EE</color>
-            <color name="purple_700">#FF3700B3</color>
-            <color name="teal_200">#FF03DAC5</color>
-            <color name="teal_700">#FF018786</color>
-            <color name="black">#FF000000</color>
-            <color name="white">#FFFFFFFF</color>
-        </resources>
-        EOF
-        
-        # 6. build.gradle (Project) - مهم جداً!
-        cat > build.gradle << 'EOF'
-        // Top-level build file
-        buildscript {
-            ext.kotlin_version = '1.9.20'
-            repositories {
-                google()
-                mavenCentral()
-            }
-            dependencies {
-                classpath 'com.android.tools.build:gradle:8.2.0'
-                classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-            }
-        }
-        
-        allprojects {
-            repositories {
-                google()
-                mavenCentral()
-            }
-        }
-        EOF
-        
-        # 7. build.gradle (App) - مهم جداً!
-        cat > app/build.gradle << 'EOF'
-        apply plugin: 'com.android.application'
-        apply plugin: 'kotlin-android'
-        
-        android {
-            compileSdkVersion 34
-            
-            defaultConfig {
-                applicationId "com.example.myaiapp"
-                minSdkVersion 28
-                targetSdkVersion 34
-                versionCode 1
-                versionName "1.0"
-            }
-            
-            buildTypes {
-                debug {
-                    minifyEnabled false
-                    proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-                }
-                release {
-                    minifyEnabled false
-                    proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-                }
-            }
-            
-            compileOptions {
-                sourceCompatibility JavaVersion.VERSION_17
-                targetCompatibility JavaVersion.VERSION_17
-            }
-            
-            kotlinOptions {
-                jvmTarget = '17'
-            }
-        }
-        
-        dependencies {
-            implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-            implementation 'androidx.core:core-ktx:1.12.0'
-            implementation 'androidx.appcompat:appcompat:1.6.1'
-            implementation 'com.google.android.material:material:1.11.0'
-            implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-        }
-        EOF
-        
-        # 8. settings.gradle
-        cat > settings.gradle << 'EOF'
-        include ':app'
-        EOF
-        
-        # 9. gradle.properties
-        cat > gradle.properties << 'EOF'
-        org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
-        android.useAndroidX=true
-        android.enableJetifier=true
-        kotlin.code.style=official
-        EOF
-        
-        # 10. proguard-rules.pro
-        cat > app/proguard-rules.pro << 'EOF'
-        # ProGuard rules
-        EOF
-        
-        # 11. Gradle Wrapper
-        cat > gradle/wrapper/gradle-wrapper.properties << 'EOF'
-        distributionBase=GRADLE_USER_HOME
-        distributionPath=wrapper/dists
-        distributionUrl=https\://services.gradle.org/distributions/gradle-8.2-bin.zip
-        networkTimeout=10000
-        validateDistributionUrl=true
-        zipStoreBase=GRADLE_USER_HOME
-        zipStorePath=wrapper/dists
-        EOF
-        
-        # تحميل gradle-wrapper.jar
-        curl -L -o gradle/wrapper/gradle-wrapper.jar \
-          https://raw.githubusercontent.com/gradle/gradle/v8.2.0/gradle/wrapper/gradle-wrapper.jar
-        
-        # 12. gradlew script
-        cat > gradlew << 'SCRIPT'
-        #!/bin/sh
-        APP_HOME=$(cd "$(dirname "$0")" && pwd)
-        CLASSPATH=$APP_HOME/gradle/wrapper/gradle-wrapper.jar
-        exec java -cp "$CLASSPATH" org.gradle.wrapper.GradleWrapperMain "$@"
-        SCRIPT
-        chmod +x gradlew
-        
-    - name: Verify Project Structure
+    - name: Build APK with Gradle
       run: |
-        echo "=== Project Structure ==="
-        ls -la
-        echo "=== build.gradle ==="
-        cat build.gradle
-        echo "=== app/build.gradle ==="
-        cat app/build.gradle
-        echo "=== settings.gradle ==="
-        cat settings.gradle
+        gradle assembleDebug
         
-    - name: Build Debug APK with Gradle Wrapper
-      run: |
-        ./gradlew assembleDebug --stacktrace
-        
-    - name: Upload Debug APK
+    - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: debug-apk
