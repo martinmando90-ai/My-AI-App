@@ -20,90 +20,231 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
         
-    - name: Install Gradle
+    - name: Create Complete Android Project
       run: |
-        sudo apt-get update
-        sudo apt-get install -y gradle
-        
-    - name: Create Project Structure
-      run: |
+        # إنشاء المجلدات
         mkdir -p app/src/main/java/com/example/myaiapp
-        mkdir -p app/src/main/res/drawable
+        mkdir -p app/src/main/res/layout
         mkdir -p app/src/main/res/values
+        mkdir -p app/src/main/res/drawable
+        mkdir -p gradle/wrapper
         
-    - name: Create build.gradle files
-      run: |
-        cat > build.gradle.kts << 'EOF'
-        plugins {
-            id("com.android.application") version "8.2.0" apply false
-            id("org.jetbrains.kotlin.android") version "1.9.20" apply false
+        # 1. AndroidManifest.xml
+        cat > app/src/main/AndroidManifest.xml << 'EOF'
+        <?xml version="1.0" encoding="utf-8"?>
+        <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+            package="com.example.myaiapp">
+            <application
+                android:label="My AI App"
+                android:theme="@style/Theme.AppCompat.Light.DarkActionBar">
+                <activity android:name=".MainActivity"
+                    android:exported="true">
+                    <intent-filter>
+                        <action android:name="android.intent.action.MAIN" />
+                        <category android:name="android.intent.category.LAUNCHER" />
+                    </intent-filter>
+                </activity>
+            </application>
+        </manifest>
+        EOF
+        
+        # 2. MainActivity.kt
+        cat > app/src/main/java/com/example/myaiapp/MainActivity.kt << 'EOF'
+        package com.example.myaiapp
+        
+        import android.os.Bundle
+        import androidx.appcompat.app.AppCompatActivity
+        
+        class MainActivity : AppCompatActivity() {
+            override fun onCreate(savedInstanceState: Bundle?) {
+                super.onCreate(savedInstanceState)
+                setContentView(R.layout.activity_main)
+            }
         }
         EOF
         
-        cat > app/build.gradle.kts << 'EOF'
-        plugins {
-            id("com.android.application")
-            id("org.jetbrains.kotlin.android")
+        # 3. activity_main.xml
+        cat > app/src/main/res/layout/activity_main.xml << 'EOF'
+        <?xml version="1.0" encoding="utf-8"?>
+        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="#0a0a1a">
+            
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🤖 My AI Assistant"
+                android:textColor="#4a90d9"
+                android:textSize="28sp"
+                android:textStyle="bold" />
+                
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Welcome to your AI!"
+                android:textColor="#c0c0c0"
+                android:layout_marginTop="16dp"
+                android:textSize="16sp" />
+                
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Built with ❤️"
+                android:textColor="#00ff88"
+                android:layout_marginTop="32dp"
+                android:textSize="12sp" />
+        </LinearLayout>
+        EOF
+        
+        # 4. strings.xml
+        cat > app/src/main/res/values/strings.xml << 'EOF'
+        <resources>
+            <string name="app_name">My AI App</string>
+        </resources>
+        EOF
+        
+        # 5. colors.xml
+        cat > app/src/main/res/values/colors.xml << 'EOF'
+        <resources>
+            <color name="purple_200">#FFBB86FC</color>
+            <color name="purple_500">#FF6200EE</color>
+            <color name="purple_700">#FF3700B3</color>
+            <color name="teal_200">#FF03DAC5</color>
+            <color name="teal_700">#FF018786</color>
+            <color name="black">#FF000000</color>
+            <color name="white">#FFFFFFFF</color>
+        </resources>
+        EOF
+        
+        # 6. build.gradle (Project) - مهم جداً!
+        cat > build.gradle << 'EOF'
+        // Top-level build file
+        buildscript {
+            ext.kotlin_version = '1.9.20'
+            repositories {
+                google()
+                mavenCentral()
+            }
+            dependencies {
+                classpath 'com.android.tools.build:gradle:8.2.0'
+                classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+            }
         }
         
+        allprojects {
+            repositories {
+                google()
+                mavenCentral()
+            }
+        }
+        EOF
+        
+        # 7. build.gradle (App) - مهم جداً!
+        cat > app/build.gradle << 'EOF'
+        apply plugin: 'com.android.application'
+        apply plugin: 'kotlin-android'
+        
         android {
-            namespace = "com.example.myaiapp"
-            compileSdk = 34
+            compileSdkVersion 34
             
             defaultConfig {
-                applicationId = "com.example.myaiapp"
-                minSdk = 28
-                targetSdk = 34
-                versionCode = 1
-                versionName = "1.0"
+                applicationId "com.example.myaiapp"
+                minSdkVersion 28
+                targetSdkVersion 34
+                versionCode 1
+                versionName "1.0"
             }
             
-            buildFeatures {
-                compose = true
+            buildTypes {
+                debug {
+                    minifyEnabled false
+                    proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+                }
+                release {
+                    minifyEnabled false
+                    proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+                }
             }
             
-            composeOptions {
-                kotlinCompilerExtensionVersion = "1.5.8"
+            compileOptions {
+                sourceCompatibility JavaVersion.VERSION_17
+                targetCompatibility JavaVersion.VERSION_17
             }
             
             kotlinOptions {
-                jvmTarget = "1.8"
+                jvmTarget = '17'
             }
         }
         
         dependencies {
-            implementation("androidx.core:core-ktx:1.12.0")
-            implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
-            implementation("androidx.activity:activity-compose:1.8.2")
-            implementation(platform("androidx.compose:compose-bom:2024.02.00"))
-            implementation("androidx.compose.ui:ui")
-            implementation("androidx.compose.material3:material3")
-            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+            implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+            implementation 'androidx.core:core-ktx:1.12.0'
+            implementation 'androidx.appcompat:appcompat:1.6.1'
+            implementation 'com.google.android.material:material:1.11.0'
+            implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
         }
         EOF
         
-        cat > settings.gradle.kts << 'EOF'
-        pluginManagement {
-            repositories {
-                google()
-                mavenCentral()
-                gradlePluginPortal()
-            }
-        }
-        dependencyResolutionManagement {
-            repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-            repositories {
-                google()
-                mavenCentral()
-            }
-        }
-        rootProject.name = "MyAIApp"
-        include(":app")
+        # 8. settings.gradle
+        cat > settings.gradle << 'EOF'
+        include ':app'
         EOF
         
-    - name: Build Debug APK with Gradle
-      run: gradle assembleDebug
-      
+        # 9. gradle.properties
+        cat > gradle.properties << 'EOF'
+        org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+        android.useAndroidX=true
+        android.enableJetifier=true
+        kotlin.code.style=official
+        EOF
+        
+        # 10. proguard-rules.pro
+        cat > app/proguard-rules.pro << 'EOF'
+        # ProGuard rules
+        EOF
+        
+        # 11. Gradle Wrapper
+        cat > gradle/wrapper/gradle-wrapper.properties << 'EOF'
+        distributionBase=GRADLE_USER_HOME
+        distributionPath=wrapper/dists
+        distributionUrl=https\://services.gradle.org/distributions/gradle-8.2-bin.zip
+        networkTimeout=10000
+        validateDistributionUrl=true
+        zipStoreBase=GRADLE_USER_HOME
+        zipStorePath=wrapper/dists
+        EOF
+        
+        # تحميل gradle-wrapper.jar
+        curl -L -o gradle/wrapper/gradle-wrapper.jar \
+          https://raw.githubusercontent.com/gradle/gradle/v8.2.0/gradle/wrapper/gradle-wrapper.jar
+        
+        # 12. gradlew script
+        cat > gradlew << 'SCRIPT'
+        #!/bin/sh
+        APP_HOME=$(cd "$(dirname "$0")" && pwd)
+        CLASSPATH=$APP_HOME/gradle/wrapper/gradle-wrapper.jar
+        exec java -cp "$CLASSPATH" org.gradle.wrapper.GradleWrapperMain "$@"
+        SCRIPT
+        chmod +x gradlew
+        
+    - name: Verify Project Structure
+      run: |
+        echo "=== Project Structure ==="
+        ls -la
+        echo "=== build.gradle ==="
+        cat build.gradle
+        echo "=== app/build.gradle ==="
+        cat app/build.gradle
+        echo "=== settings.gradle ==="
+        cat settings.gradle
+        
+    - name: Build Debug APK with Gradle Wrapper
+      run: |
+        ./gradlew assembleDebug --stacktrace
+        
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
       with:
