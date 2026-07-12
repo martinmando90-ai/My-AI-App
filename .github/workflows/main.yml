@@ -6,13 +6,20 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container:
-      image: mingc/android-build-box:latest
-      
+    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+      
+    - name: Setup JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
     - name: Create Android Project
       run: |
         mkdir -p app/src/main/java/com/example/myaiapp
@@ -80,8 +87,72 @@ jobs:
         </resources>
         EOF
         
-    - name: Build APK with Gradle
+    - name: Download Gradle
       run: |
+        wget https://services.gradle.org/distributions/gradle-8.2-bin.zip
+        unzip -q gradle-8.2-bin.zip
+        export PATH=$PATH:$PWD/gradle-8.2/bin
+        
+    - name: Create build.gradle files
+      run: |
+        cat > build.gradle << 'EOF'
+        buildscript {
+            ext.kotlin_version = '1.9.20'
+            repositories {
+                google()
+                mavenCentral()
+            }
+            dependencies {
+                classpath 'com.android.tools.build:gradle:8.2.0'
+                classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+            }
+        }
+        allprojects {
+            repositories {
+                google()
+                mavenCentral()
+            }
+        }
+        EOF
+        
+        cat > app/build.gradle << 'EOF'
+        apply plugin: 'com.android.application'
+        apply plugin: 'kotlin-android'
+        android {
+            compileSdkVersion 34
+            defaultConfig {
+                applicationId "com.example.myaiapp"
+                minSdkVersion 28
+                targetSdkVersion 34
+                versionCode 1
+                versionName "1.0"
+            }
+            buildTypes {
+                debug {
+                    minifyEnabled false
+                }
+            }
+        }
+        dependencies {
+            implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+            implementation 'androidx.core:core-ktx:1.12.0'
+            implementation 'androidx.appcompat:appcompat:1.6.1'
+            implementation 'com.google.android.material:material:1.11.0'
+        }
+        EOF
+        
+        cat > settings.gradle << 'EOF'
+        include ':app'
+        EOF
+        
+        cat > gradle.properties << 'EOF'
+        android.useAndroidX=true
+        android.enableJetifier=true
+        EOF
+        
+    - name: Build APK
+      run: |
+        export PATH=$PATH:$PWD/gradle-8.2/bin
         gradle assembleDebug
         
     - name: Upload APK
